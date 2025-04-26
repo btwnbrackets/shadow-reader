@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "shadow-reader",
+    "slug": "shadow-reader",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "icon": "./assets/images/playstore.png",
+    "scheme": "myapp",
+    "userInterfaceStyle": "automatic",
+    "assetBundlePatterns": ["assets/**/*"],
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "supportsTablet": true,
+      "package": "com.github.btwnbrackets.shadowreader",
+      "backgroundColor": "#5E81AC"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/playstore.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#5E81AC"
+        }
+      ],
+      "expo-sqlite"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "79928a47-1bbb-491f-b714-4c3a41b254ad"
+      }
+    }
+  }
+}

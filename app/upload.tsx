@@ -11,6 +11,7 @@ import { ThemeType } from "@/style/theme";
 import EmptyScreenMessage from "@/components/common/EmptyScreenMessage";
 import uploadHook from "@/hooks/upload/uploadHook";
 import csvHook from "@/hooks/upload/csvHook";
+import apkgHook from "@/hooks/upload/apkgHook";
 
 export default function UploadScreen() {
   const { theme } = useTheme();
@@ -40,8 +41,14 @@ export default function UploadScreen() {
       setTextData,
     });
 
+  const { loadApkgFileCallback } = apkgHook({
+    setAudioFiles,
+    setColMap,
+    setColExample,
+    setTextData,
+  });
   const pickTextFileWithCallback = () => {
-    return pickTextFile(loadTextFileCallback, () => {});
+    return pickTextFile(loadTextFileCallback, loadApkgFileCallback);
   };
   return isProcessing ? (
     <EmptyScreenMessage message="Processing files...">

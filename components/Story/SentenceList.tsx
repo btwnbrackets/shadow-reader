@@ -40,7 +40,7 @@ export default function SentenceList({
         contentContainerStyle={commonStyles.flatList}
         ref={flatListRef}
         data={sentences}
-        keyExtractor={(item) => item.audioUri}
+        keyExtractor={(item, index) => `${index}`}
         renderItem={({ item, index }) => (
           <SentenceItem
             toggleFavorite={() => toggleFavorite(item.id)}

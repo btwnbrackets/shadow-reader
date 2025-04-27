@@ -112,5 +112,13 @@ export const commonStyles = StyleSheet.create({
   centeredText: {
     textAlign: "center",
   },
-
+  baseLang: {
+    fontSize: fontSize.large,
+  },
+  japanese: {
+    fontFamily: fonts.japanese,
+  },
+  korean: {
+    fontFamily: fonts.korean,
+  },
 });

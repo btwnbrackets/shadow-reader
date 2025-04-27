@@ -71,6 +71,7 @@ export type ThemeType = typeof lightTheme;
 
 export const fonts = {
   japanese: "NotoSerifJP",
+  korean: "NotoSerifKR"
 };
 
 export const spacing = {

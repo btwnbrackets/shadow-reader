@@ -23,6 +23,7 @@ export default function Layout() {
   const [dbInitialized, setDbInitialized] = useState(false);
   const [fontsLoaded] = useFonts({
     NotoSerifJP: require("../assets/fonts/NotoSerifJP-VariableFont_wght.ttf"),
+    NotoSerifKR: require("../assets/fonts/NotoSerifKR-VariableFont_wght.ttf"),
   });
   console.log("font...");
 

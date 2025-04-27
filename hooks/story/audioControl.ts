@@ -112,7 +112,7 @@ export default function audioControl({ sentences, scrollToItem }: Props) {
 
   const playAudio = async (id: number) => {
     if (!sentences || id < 0 || id >= sentences.length) {
-      return;
+      return false;
     }
     console.log("Playing audio:", {
       id,
@@ -121,6 +121,9 @@ export default function audioControl({ sentences, scrollToItem }: Props) {
       isRepeat,
     });
     const fileUri: string = sentences[id].audioUri;
+    if (fileUri === "") {
+      return false;
+    }
     try {
       scrollToItem(id);
       if (sound) {
@@ -159,10 +162,13 @@ export default function audioControl({ sentences, scrollToItem }: Props) {
       setSound(newSound);
       setActive(id);
       await newSound.playAsync();
+      return true;
     } catch (error) {
       console.error("Error playing audio:", error);
       Alert.alert("Error", "Failed to play audio.");
+      return false;
     }
+
   };
 
   const toggleRepeat = () => setIsRepeat((prev) => !prev);

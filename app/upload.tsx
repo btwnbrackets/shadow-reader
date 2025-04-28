@@ -1,5 +1,11 @@
 import React from "react";
-import { Text, StyleSheet, View, ActivityIndicator } from "react-native";
+import {
+  Text,
+  StyleSheet,
+  View,
+  ActivityIndicator,
+  TextInput,
+} from "react-native";
 import BasicButton from "@/components/common/BasicButton";
 import { ScrollView } from "react-native-gesture-handler";
 import { commonStyles } from "@/style/commonStyles";
@@ -18,41 +24,44 @@ export default function UploadScreen() {
 
   const {
     textFile,
-    audioFiles,
-    setAudioFiles,
     extension,
     textData,
-    setTextData,
     isProcessing,
+    isLoading,
     colMap,
     setColMap,
     colExample,
-    setColExample,
     pickTextFile,
     proceed,
     handleProceed,
+    selectColumns,
+    setTextData,
+    filename,
+    setFilename,
   } = uploadHook();
 
-  const { fileOptions, setFileOptions, loadTextFileCallback, pickAudioFiles } =
-    csvHook({
-      setAudioFiles,
-      setColMap,
-      setColExample,
-      setTextData,
-    });
+  const {
+    fileOptions,
+    audioFiles,
+    setFileOptions,
+    loadTextFileCallback,
+    handleTextFileCallback,
+    pickAudioFiles,
+  } = csvHook({ selectColumns, setTextData });
 
-  const { loadApkgFileCallback } = apkgHook({
-    setAudioFiles,
-    setColMap,
-    setColExample,
-    setTextData,
-  });
+  const { loadApkgFileCallback } = apkgHook();
+
   const pickTextFileWithCallback = () => {
     return pickTextFile(loadTextFileCallback, loadApkgFileCallback);
   };
+
+  const handleProceedWithCallback = () => {
+    return handleProceed(handleTextFileCallback, handleTextFileCallback);
+  };
+
   return isProcessing ? (
     <EmptyScreenMessage message="Processing files...">
-      {isProcessing && <ActivityIndicator size="large" />}
+      {<ActivityIndicator size="large" />}
     </EmptyScreenMessage>
   ) : (
     <ScreenWrapper style={commonStyles.scrollContainer}>
@@ -85,128 +94,140 @@ export default function UploadScreen() {
             </>
           )}
         </View>
-        {textFile && (
+
+        {textFile && !proceed() && (
           <View style={style(theme).group}>
-            {extension === "csv" || extension === "txt" ? (
-              <Table
-                rowData={[
-                  {
-                    label: "Split cells by",
-                    placeholder: fileOptions.colSplit,
-                    setInput: (colSplit: string) => {
-                      setFileOptions({ ...fileOptions, colSplit });
-                    },
-                    dropdown: [
-                      { label: "Comma (,)", value: "," },
-                      { label: "Tab (\\t)", value: "\t" },
-                      { label: "Semicolon (;)", value: ";" },
-                      { label: "Pipe (|)", value: "|" },
-                    ],
+            <View>
+              <Text style={[commonStyles.textBM, { color: theme.text }]}>
+                Unsupported file type
+              </Text>
+            </View>
+          </View>
+        )}
+        {textFile && (extension === "csv" || extension === "txt") && (
+          <View style={style(theme).group}>
+            <Table
+              rowData={[
+                {
+                  label: "Split cells by",
+                  placeholder: fileOptions.colSplit,
+                  setInput: (colSplit: string) => {
+                    setFileOptions({ ...fileOptions, colSplit });
                   },
-                  {
-                    label: "Is first line the header",
-                    placeholder: fileOptions.isHeader,
-                    setInput: (isHeader: boolean) => {
-                      setFileOptions({ ...fileOptions, isHeader });
-                    },
+                  dropdown: [
+                    { label: "Comma (,)", value: "," },
+                    { label: "Tab (\\t)", value: "\t" },
+                    { label: "Semicolon (;)", value: ";" },
+                    { label: "Pipe (|)", value: "|" },
+                  ],
+                },
+                {
+                  label: "Is first line the header",
+                  placeholder: fileOptions.isHeader,
+                  setInput: (isHeader: boolean) => {
+                    setFileOptions({ ...fileOptions, isHeader });
                   },
-                  {
-                    label: "Ignore lines starting with",
-                    placeholder: fileOptions.comment,
-                    setInput: (comment: string) => {
-                      setFileOptions({ ...fileOptions, comment });
-                    },
+                },
+                {
+                  label: "Ignore lines starting with",
+                  placeholder: fileOptions.comment,
+                  setInput: (comment: string) => {
+                    setFileOptions({ ...fileOptions, comment });
                   },
-                ]}
-              />
-            ) : extension === "apkg" ? (
-              <View>
-                <Text style={[commonStyles.textBM, { color: theme.text }]}>
-                  apkg anki file
-                </Text>
-              </View>
-            ) : (
-              <View>
-                <Text style={[commonStyles.textBM, { color: theme.text }]}>
-                  Unsupported file type
-                </Text>
-              </View>
-            )}
+                },
+              ]}
+            />
           </View>
         )}
 
-        {(extension === "csv" || extension === "txt") &&
-          colExample &&
-          colMap && (
-            <View style={style(theme).group}>
-              {textData && (
-                <Text style={[commonStyles.normalText, { color: theme.text }]}>
-                  {textData.length} Rows.
-                </Text>
-              )}
-              <Table
-                rowData={[
-                  {
-                    label: "Sentence Content Column",
-                    placeholder: colMap.sentence,
-                    setInput: (sentence: number) => {
-                      setColMap({ ...colMap, sentence });
-                    },
-                    dropdown: colExample.columns,
-                    message:
-                      colMap.sentence >= 0 &&
-                      colMap.sentence < colExample.columns.length
-                        ? "Example: " +
-                          getParsedCell(
-                            colExample.examples,
-                            colExample.columns,
-                            colMap.sentence
-                          )
-                        : undefined,
-                  },
-                  {
-                    label: "Translation Column",
-                    placeholder: colMap.meaning,
-                    setInput: (meaning: number) => {
-                      setColMap({ ...colMap, meaning });
-                    },
-                    dropdown: colExample.columns,
-                    message:
-                      colMap.meaning >= 0 &&
-                      colMap.meaning < colExample.columns.length
-                        ? "Example: " +
-                          getParsedCell(
-                            colExample.examples,
-                            colExample.columns,
-                            colMap.meaning
-                          )
-                        : undefined,
-                  },
-                  {
-                    label: "Audio Column",
-                    placeholder: colMap.audio,
-                    setInput: (audio: number) => {
-                      setColMap({ ...colMap, audio });
-                    },
-                    dropdown: colExample.columns,
-                    message:
-                      colMap.audio >= 0 &&
-                      colMap.audio < colExample.columns.length
-                        ? "Example: " +
-                          getParsedCell(
-                            colExample.examples,
-                            colExample.columns,
-                            colMap.audio
-                          )
-                        : undefined,
-                  },
-                ]}
-              />
+        {textFile && extension === "apkg" && isLoading && (
+          <View style={style(theme).group}>
+            <View>
+              <Text style={[commonStyles.textBM, { color: theme.text }]}>
+                Processing Anki file
+              </Text>
+              <ActivityIndicator size="large" />
             </View>
-          )}
+          </View>
+        )}
+
+        {proceed() && colExample && colMap && !isLoading && (
+          <View style={style(theme).group}>
+            {textData && (
+              <Text style={[commonStyles.normalText, { color: theme.text }]}>
+                Processed {textData.length} Rows.
+              </Text>
+            )}
+            <Table
+              rowData={[
+                {
+                  label: "Story name",
+                  placeholder: filename,
+                  setInput: (name: string) => {
+                    setFilename(name);
+                  },
+                },
+                {
+                  label: "Content Column",
+                  placeholder: colMap.sentence,
+                  setInput: (sentence: number) => {
+                    setColMap({ ...colMap, sentence });
+                  },
+                  dropdown: colExample.columns,
+                  message:
+                    colMap.sentence >= 0 &&
+                    colMap.sentence < colExample.columns.length
+                      ? "Example: " +
+                        getParsedCell(
+                          colExample.examples,
+                          colExample.columns,
+                          colMap.sentence
+                        )
+                      : undefined,
+                },
+                {
+                  label: "Translation Column",
+                  placeholder: colMap.meaning,
+                  setInput: (meaning: number) => {
+                    setColMap({ ...colMap, meaning });
+                  },
+                  dropdown: colExample.columns,
+                  message:
+                    colMap.meaning >= 0 &&
+                    colMap.meaning < colExample.columns.length
+                      ? "Example: " +
+                        getParsedCell(
+                          colExample.examples,
+                          colExample.columns,
+                          colMap.meaning
+                        )
+                      : undefined,
+                },
+                {
+                  label: "Audio Column",
+                  placeholder: colMap.audio,
+                  setInput: (audio: number) => {
+                    setColMap({ ...colMap, audio });
+                  },
+                  dropdown: colExample.columns,
+                  message:
+                    colMap.audio >= 0 &&
+                    colMap.audio < colExample.columns.length
+                      ? "Example: " +
+                        getParsedCell(
+                          colExample.examples,
+                          colExample.columns,
+                          colMap.audio
+                        )
+                      : undefined,
+                },
+              ]}
+            />
+          </View>
+        )}
         <BasicButton
-          title="Proceed"
-          onPress={handleProceed}
+          title="Save"
+          onPress={handleProceedWithCallback}
           disabled={!textFile || !proceed()}
         />
       </ScrollView>

@@ -58,7 +58,11 @@ async function loadMediaFile() {
 }
 
 async function openDatabase(dbPath: string) {
+  console.log("openDatabase");
+
   const db = await openDatabaseAsync(dbPath);
+  console.log("db", db);
+
   const modelsRows = (await db.getFirstAsync("SELECT models FROM col")) as {
     models: string;
   };
@@ -93,8 +97,10 @@ export async function parseApkg(uri: string) {
   const mediaMap = await loadMediaFile();
   const { notes, modelFields } = await openDatabase(dbPath);
 
-  const parsedNotes = notes.map((note) => {
+  let mid;
+  const parsedData = notes.map((note) => {
     const fields = note.flds.split("\x1f");
+    mid = note.mid;
     const fieldNames = modelFields[note.mid] || [];
     const data: Record<string, string> = {};
     fieldNames.forEach((name, idx) => {
@@ -103,9 +109,8 @@ export async function parseApkg(uri: string) {
 
     return data;
   });
-  console.log(parsedNotes[0]);
   return {
-    parsedNotes,
-    modelFields,
+    parsedData,
+    columns: mid ? modelFields[mid] : [],
   };
 }

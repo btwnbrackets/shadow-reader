@@ -1,6 +1,6 @@
 import { commonStyles } from "@/style/commonStyles";
 import { useTheme } from "@/style/ThemeProvider";
-import { Switch, Text, View, TextInput } from "react-native";
+import { Switch, Text, View, TextInput, ViewStyle } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { useState } from "react";
 import { fontSize } from "@/style/theme";
@@ -45,17 +45,19 @@ export type RowField =
 
 export function TableRow(options: RowField) {
   const { theme } = useTheme();
-  const [selectedLanguage, setSelectedLanguage] = useState();
-  return (
-    <View>
-      <View
-        style={{
+  const viewStyle = (
+    typeof options.placeholder === "string" || "dropdown" in options
+      ? {}
+      : {
           flexDirection: "row",
           alignContent: "center",
           alignItems: "center",
-        }}
-      >
-        <Text style={[commonStyles.normalText, { color: theme.text, flex: 1 }]}>
+        }
+  ) as ViewStyle;
+  return (
+    <View>
+      <View style={viewStyle}>
+        <Text style={[commonStyles.normalText, commonStyles.marginSV, { color: theme.text, flex: 1 }]}>
           {options.label}
         </Text>
         {"dropdown" in options ? (
@@ -145,11 +147,11 @@ export function TableRow(options: RowField) {
         )}
       </View>
       {options.message && (
-        <View style={[{ alignItems: "flex-end", flex: 1 }]}>
+        <View style={[commonStyles.marginSV, { flex: 1 }]}>
           <Text
             style={[
               commonStyles.normalText,
-              { color: theme.lightGray, width: "50%" },
+              { color: theme.lightGray },
             ]}
           >
             {options.message}

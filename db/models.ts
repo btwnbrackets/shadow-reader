@@ -1,3 +1,14 @@
+
+export type ParsedCSVType = string[] | { [key: string]: string };
+
+export type ColExampleType = { columns: string[]; examples: ParsedCSVType };
+
+export type ColMapType = {
+  sentence: number;
+  audio: number;
+  meaning: number;
+};
+
 export interface Story {
   id: number;
   name: string;

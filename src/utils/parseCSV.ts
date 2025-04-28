@@ -1,7 +1,7 @@
+import { ParsedCSVType } from "@/db/models";
 import Papa from "papaparse";
 
-export type ParsedCSVType = string[] | { [key: string]: string };
-export const parseCsv = (
+export const parseCsv = async (
   csvString: string,
   header: boolean,
   delimiter: string,
@@ -13,7 +13,16 @@ export const parseCsv = (
     delimiter: delimiter,
     comments: comments,
   });
-  return parsed.data as ParsedCSVType[];
+  const parsedData = parsed.data as ParsedCSVType[];
+
+  const columns = getColumns(parsedData);
+
+  return { parsedData, columns };
+};
+
+const getColumns = (data: any[]): string[] => {
+  if (data.length === 0) return [];
+  return Object.keys(data[0]);
 };
 
 export const getParsedCell = (
@@ -21,7 +30,7 @@ export const getParsedCell = (
   cols: string[],
   index: number
 ) => {
-  if(index >= 0 && index < cols.length) {
+  if (index >= 0 && index < cols.length) {
     return Array.isArray(row) ? row[index] : row[cols[index]];
   }
   return undefined;

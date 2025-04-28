@@ -1,30 +1,24 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import * as DocumentPicker from "expo-document-picker";
-import { getParsedCell, parseCsv, ParsedCSVType } from "@/src/utils/parseCSV";
+import { getParsedCell } from "@/src/utils/parseCSV";
 import * as FileSystem from "expo-file-system";
 import { Alert } from "react-native";
 import { addSentence, addStory } from "@/db/queries";
 import { useRouter } from "expo-router";
 import { ALLOWED_EXT } from "@/style/constants";
-
-export type ColExampleType = { columns: string[]; examples: ParsedCSVType };
-export type ColMapType = {
-  sentence: number;
-  audio: number;
-  meaning: number;
-};
+import { ColExampleType, ColMapType, ParsedCSVType } from "@/db/models";
 
 export default function uploadHook() {
   const [textFile, setTextFile] =
-    useState<DocumentPicker.DocumentPickerResult | null>(null);
-  const [audioFiles, setAudioFiles] =
     useState<DocumentPicker.DocumentPickerResult | null>(null);
   const router = useRouter();
   const [extension, setExtension] = useState<string | undefined>();
   const [textData, setTextData] = useState<ParsedCSVType[] | undefined>();
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [colMap, setColMap] = useState<ColMapType>();
   const [colExample, setColExample] = useState<ColExampleType>();
+  const [filename, setFilename] = useState<string>("");
 
   const getFileExtension = (filename: string | undefined) => {
     return filename?.split(".")?.pop()?.toLowerCase();
@@ -38,9 +32,15 @@ export default function uploadHook() {
   };
 
   const pickTextFile = async (
-    csvCallback: (uri: string | undefined) => void,
-    apkgCallback: (uri: string | undefined) => void
+    csvCallback: (
+      uri: string
+    ) => Promise<{ parsedData: ParsedCSVType[]; columns: string[] }>,
+    apkgCallback: (
+      uri: string
+    ) => Promise<{ parsedData: ParsedCSVType[]; columns: string[] }>
   ) => {
+    setTextData(undefined);
+    selectColumns([], []);
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: "*/*",
@@ -52,20 +52,31 @@ export default function uploadHook() {
       setTextFile(result);
       let ext = getFileExtension(result?.assets?.[0]?.name);
       setExtension(ext);
-      const callback = ext === "apkg" ? apkgCallback : csvCallback;
+      setFilename(result.assets[0].name.replace("." + (ext || ""), ""));
       console.log("ext", ext, result?.assets?.[0]?.name);
+
+      const callback = ext === "apkg" ? apkgCallback : csvCallback;
       if (proceed(ext)) {
         let uri = result?.assets?.[0]?.uri;
-        callback(uri);
-      } else {
-        callback(undefined);
+
+        if (uri) {
+          setIsLoading(true);
+          const { parsedData, columns } = await callback(uri);
+          setTextData(parsedData);
+          selectColumns(columns, parsedData);
+        }
       }
     } catch (error) {
       Alert.alert("Error", "Failed to pick a text file.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleProceed = async () => {
+  const handleProceed = async (
+    csvCallback: (dir: string | undefined) => Promise<Map<string, string>>,
+    apkgCallback: (dir: string | undefined) => Promise<Map<string, string>>
+  ) => {
     if (
       !textFile ||
       !proceed() ||
@@ -87,13 +98,10 @@ export default function uploadHook() {
 
       const audioDir = `${storyDir}/audio`;
       await FileSystem.makeDirectoryAsync(audioDir, { intermediates: true });
-
-      const movedAudioFiles = new Map();
-      audioFiles?.assets?.forEach(async (file) => {
-        const newFilePath = `${audioDir}/${file.name}`;
-        await FileSystem.copyAsync({ from: file.uri, to: newFilePath });
-        movedAudioFiles.set(file.name, newFilePath);
-      });
+      const movedAudioFiles =
+        extension === "apkg"
+          ? await apkgCallback(audioDir)
+          : await csvCallback(audioDir);
 
       const dbStoryId = await addStory(
         textFile?.assets?.[0]?.name || "",
@@ -106,7 +114,7 @@ export default function uploadHook() {
         if (sentence || audio || meaning) {
           await addSentence(
             sentence || "",
-            movedAudioFiles.get(audio) || "",
+            (audio && movedAudioFiles.get(audio)) || "",
             meaning || "",
             dbStoryId
           );
@@ -128,14 +136,25 @@ export default function uploadHook() {
     }
   };
 
+  const selectColumns = (cols: string[], data: ParsedCSVType[]) => {
+    setColExample({
+      columns: cols,
+      examples: data.length > 0 ? data[0] : {},
+    });
+    setColMap({
+      sentence: data.length > 0 ? 0 : -1,
+      meaning: cols.length > 1 ? 1 : -1,
+      audio: cols.length > 2 ? 2 : -1,
+    });
+  };
+
   return {
     textFile,
-    audioFiles,
-    setAudioFiles,
     extension,
     textData,
     setTextData,
     isProcessing,
+    isLoading,
     colMap,
     setColMap,
     colExample,
@@ -143,5 +162,8 @@ export default function uploadHook() {
     pickTextFile,
     proceed,
     handleProceed,
+    selectColumns,
+    filename,
+    setFilename,
   };
 }

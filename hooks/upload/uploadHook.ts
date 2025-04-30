@@ -104,12 +104,16 @@ export default function uploadHook() {
           : await csvCallback(audioDir);
 
       const dbStoryId = await addStory(
-        textFile?.assets?.[0]?.name || "",
+        filename,
         storyCreationDate
       );
       textData.forEach(async (row) => {
         let sentence = getParsedCell(row, colExample.columns, colMap.sentence);
         let audio = getParsedCell(row, colExample.columns, colMap.audio);
+        if(audio && audio.startsWith("[sound:")) {
+          audio = audio.slice(7, -1);
+        }
+
         let meaning = getParsedCell(row, colExample.columns, colMap.meaning);
         if (sentence || audio || meaning) {
           await addSentence(

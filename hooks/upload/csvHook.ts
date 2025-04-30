@@ -36,7 +36,7 @@ export default function csvHook({ selectColumns, setTextData }: Props) {
     );
   };
 
-  const handleTextFileCallback = async (dir: string | undefined) => {
+  const handleTextAudioCallback = async (dir: string | undefined) => {
     const movedAudioFiles = new Map<string, string>();
     if (dir) {
       audioFiles?.assets?.forEach(async (file) => {
@@ -45,6 +45,7 @@ export default function csvHook({ selectColumns, setTextData }: Props) {
         movedAudioFiles.set(file.name, newFilePath);
       });
     }
+    console.log(movedAudioFiles);
     return movedAudioFiles;
   };
 
@@ -86,7 +87,7 @@ export default function csvHook({ selectColumns, setTextData }: Props) {
     audioFiles,
     setFileOptions,
     loadTextFileCallback,
-    handleTextFileCallback,
+    handleTextAudioCallback,
     pickAudioFiles,
   };
 }

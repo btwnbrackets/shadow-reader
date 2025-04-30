@@ -1,24 +1,27 @@
 import { ParsedCSVType } from "@/db/models";
-import { parseApkg } from "@/src/utils/parseApkg";
+import { parseAndSaveAudio, parseApkg } from "@/src/utils/parseApkg";
+import { useCallback, useEffect, useState } from "react";
 
-type Props = {
-};
+type Props = {};
 
 export default function apkgHook() {
+  const [audioMap, setAudioMap] = useState<Record<string, string>>({});
+
   const loadApkgFileCallback = async (uri: string) => {
-    return parseApkg(uri);
+    const { parsedData, columns, mediaMap } = await parseApkg(uri);
+    setAudioMap(mediaMap);
+    return { parsedData, columns };
   };
 
-  const handleTextFileCallback = async (
-    dir: string | undefined
-  ) => {
-    const movedAudioFiles = new Map<string, string>();
-
-    return movedAudioFiles;
-  };
+  const handleApkgAudioCallback = useCallback(
+    async (dir: string | undefined) => {
+      return parseAndSaveAudio(dir, audioMap);
+    },
+    [audioMap]
+  );
 
   return {
     loadApkgFileCallback,
-    handleTextFileCallback,
+    handleApkgAudioCallback,
   };
 }

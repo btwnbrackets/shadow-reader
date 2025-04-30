@@ -2,7 +2,7 @@
   "expo": {
     "name": "shadow-reader",
     "slug": "shadow-reader",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/playstore.png",
     "scheme": "myapp",
@@ -38,7 +38,6 @@
         "origin": false
       },
       "eas": {
-        "projectId": "79928a47-1bbb-491f-b714-4c3a41b254ad"
       }
     }
   }

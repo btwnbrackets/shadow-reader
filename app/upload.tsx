@@ -45,18 +45,18 @@ export default function UploadScreen() {
     audioFiles,
     setFileOptions,
     loadTextFileCallback,
-    handleTextFileCallback,
+    handleTextAudioCallback,
     pickAudioFiles,
   } = csvHook({ selectColumns, setTextData });
 
-  const { loadApkgFileCallback } = apkgHook();
+  const { loadApkgFileCallback, handleApkgAudioCallback } = apkgHook();
 
   const pickTextFileWithCallback = () => {
     return pickTextFile(loadTextFileCallback, loadApkgFileCallback);
   };
 
   const handleProceedWithCallback = () => {
-    return handleProceed(handleTextFileCallback, handleTextFileCallback);
+    return handleProceed(handleTextAudioCallback, handleApkgAudioCallback);
   };
 
   return isProcessing ? (
@@ -230,6 +230,9 @@ export default function UploadScreen() {
           onPress={handleProceedWithCallback}
           disabled={!textFile || !proceed()}
         />
+        <View style={commonStyles.gapL}>
+          <Text>TODO: remove later</Text>
+        </View>
       </ScrollView>
     </ScreenWrapper>
   );

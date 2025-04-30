@@ -1,8 +1,8 @@
 TODO:
-* audio: fix in both
-* delete unused media files 
+* delete unused media files while uploading
 * delete zip file in anki
-* test audio upload: what if I upload too many audio files? what if I uploaded less than expected?
+* process CSV and TXT differently: upload text + audio and specify how the audio should be dealt with (eg load audio alphabetically or by sorting)
+* fix delete: delete audio directory 
 
 later:
 * upload tags + language

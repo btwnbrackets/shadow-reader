@@ -1,3 +1,4 @@
+import { ColMapType, ParsedCSVType } from "@/db/models";
 import * as FileSystem from "expo-file-system";
 import { openDatabaseAsync } from "expo-sqlite";
 import { unzipSync } from "fflate";
@@ -112,5 +113,22 @@ export async function parseApkg(uri: string) {
   return {
     parsedData,
     columns: mid ? modelFields[mid] : [],
+    mediaMap,
   };
+}
+
+export async function parseAndSaveAudio(
+  dir: string | undefined,
+  mediaMap: Record<string, string>
+) {
+  const movedAudioFiles = new Map<string, string>();
+  if (dir) {
+    Object.entries(mediaMap).forEach(async ([key, value]) => {
+      const newFilePath = `${dir}/${value}`;
+      await FileSystem.copyAsync({ from: UNZIP_LOCATION + key, to: newFilePath });
+      movedAudioFiles.set(value, newFilePath);
+    });
+  }
+  console.log("movedAudioFiles", movedAudioFiles);
+  return movedAudioFiles;
 }

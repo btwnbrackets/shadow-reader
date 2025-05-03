@@ -73,7 +73,6 @@ function App() {
         }}
       >
         <Stack.Screen name="(tabs)" options={{ title: "Main", headerShown: false }} />
-        <Stack.Screen name="processing" options={{ title: "Processing" }} />
         <Stack.Screen name="upload" options={{ title: "Uploading" }} />
         <Stack.Screen name="story/[id]" options={{ title: "Story Details" }} />
       </Stack>

@@ -121,6 +121,7 @@ export default function audioControl({ sentences, scrollToItem }: Props) {
       isRepeat,
     });
     const fileUri: string = sentences[id].audioUri;
+
     if (fileUri === "") {
       return false;
     }

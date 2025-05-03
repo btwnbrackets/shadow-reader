@@ -38,7 +38,7 @@ export default function queryIndex() {
   };
 
   const loadData = async () => {
-    console.log("load history");
+    console.log("load index");
     try {
       const data = await getAllStories(sortedColumn.column, sortedColumn.isAsc, searchWord);
       setStories(data);

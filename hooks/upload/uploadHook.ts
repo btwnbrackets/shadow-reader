@@ -67,6 +67,7 @@ export default function uploadHook() {
         }
       }
     } catch (error) {
+      console.error(error);
       Alert.alert("Error", "Failed to pick a text file.");
     } finally {
       setIsLoading(false);
@@ -91,6 +92,7 @@ export default function uploadHook() {
       return;
     }
     setIsProcessing(true);
+    let audioFiles = 0;
     try {
       const storyCreationDate = new Date().toISOString();
       const storyDir = `${FileSystem.documentDirectory}story/${storyCreationDate}`;
@@ -102,15 +104,12 @@ export default function uploadHook() {
         extension === "apkg"
           ? await apkgCallback(audioDir)
           : await csvCallback(audioDir);
-
-      const dbStoryId = await addStory(
-        filename,
-        storyCreationDate
-      );
-      textData.forEach(async (row) => {
+      console.log("total media files", movedAudioFiles.size);
+      const dbStoryId = await addStory(filename, storyCreationDate);
+      const dbTask = textData.map(async (row) => {
         let sentence = getParsedCell(row, colExample.columns, colMap.sentence);
         let audio = getParsedCell(row, colExample.columns, colMap.audio);
-        if(audio && audio.startsWith("[sound:")) {
+        if (audio && audio.startsWith("[sound:")) {
           audio = audio.slice(7, -1);
         }
 
@@ -122,12 +121,21 @@ export default function uploadHook() {
             meaning || "",
             dbStoryId
           );
+          if (audio) {
+            audioFiles += 1;
+            movedAudioFiles.delete(audio);
+          }
         }
       });
 
+      await Promise.all(dbTask);
+      console.log("unused media files", movedAudioFiles.size);
+      for (const [key, value] of movedAudioFiles) {
+        await FileSystem.deleteAsync(value);
+      }
       Alert.alert(
         "Success",
-        `Processed ${textData.length} sentences & ${movedAudioFiles.size} audio files!`
+        `Processed ${textData.length} sentences & ${audioFiles} audio files. And deleted ${movedAudioFiles.size} unused media files.`
       );
 
       router.replace("/");

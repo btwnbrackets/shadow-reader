@@ -230,9 +230,9 @@ export default function UploadScreen() {
           onPress={handleProceedWithCallback}
           disabled={!textFile || !proceed()}
         />
-        <View style={commonStyles.gapL}>
+        {/* <View style={commonStyles.gapL}>
           <Text>TODO: remove later</Text>
-        </View>
+        </View> */}
       </ScrollView>
     </ScreenWrapper>
   );

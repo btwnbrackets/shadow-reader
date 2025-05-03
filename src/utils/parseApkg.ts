@@ -93,7 +93,13 @@ async function openDatabase(dbPath: string) {
 }
 
 export async function parseApkg(uri: string) {
+  const info = await FileSystem.getInfoAsync(UNZIP_LOCATION);
+  if (info.exists) {
+    await FileSystem.deleteAsync(UNZIP_LOCATION);
+    console.log("deleted unzip location", UNZIP_LOCATION);
+  }
   await FileSystem.makeDirectoryAsync(UNZIP_LOCATION, { intermediates: true });
+  console.log("create unzip location", UNZIP_LOCATION);
   const { filenames, dbPath } = await loadApkgAndExtract(uri);
   const mediaMap = await loadMediaFile();
   const { notes, modelFields } = await openDatabase(dbPath);
@@ -123,12 +129,25 @@ export async function parseAndSaveAudio(
 ) {
   const movedAudioFiles = new Map<string, string>();
   if (dir) {
-    Object.entries(mediaMap).forEach(async ([key, value]) => {
+    const audioTask = Object.entries(mediaMap).map(async ([key, value]) => {
       const newFilePath = `${dir}/${value}`;
-      await FileSystem.copyAsync({ from: UNZIP_LOCATION + key, to: newFilePath });
       movedAudioFiles.set(value, newFilePath);
+      return await FileSystem.copyAsync({
+        from: UNZIP_LOCATION + key,
+        to: newFilePath,
+      });
     });
+    await Promise.all(audioTask);
   }
+
   console.log("movedAudioFiles", movedAudioFiles);
+
+  // delete zip folder
+  const info = await FileSystem.getInfoAsync(UNZIP_LOCATION);
+  if (info.exists) {
+    await FileSystem.deleteAsync(UNZIP_LOCATION);
+    console.log("deleted unzip location", UNZIP_LOCATION);
+  }
+
   return movedAudioFiles;
 }

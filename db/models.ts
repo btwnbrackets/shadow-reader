@@ -1,4 +1,11 @@
 
+export enum Status {
+  Succeed,
+  Error,
+  Processing,
+  Idle,
+}
+
 export type ParsedCSVType = string[] | { [key: string]: string };
 
 export type ColExampleType = { columns: string[]; examples: ParsedCSVType };

@@ -18,6 +18,7 @@ import EmptyScreenMessage from "@/components/common/EmptyScreenMessage";
 import uploadHook from "@/hooks/upload/uploadHook";
 import csvHook from "@/hooks/upload/csvHook";
 import apkgHook from "@/hooks/upload/apkgHook";
+import { Status } from "@/db/models";
 
 export default function UploadScreen() {
   const { theme } = useTheme();
@@ -59,9 +60,23 @@ export default function UploadScreen() {
     return handleProceed(handleTextAudioCallback, handleApkgAudioCallback);
   };
 
-  return isProcessing ? (
+  return isProcessing !== Status.Idle ? (
     <EmptyScreenMessage message="Processing files...">
-      {<ActivityIndicator size="large" />}
+      {isProcessing === Status.Processing ? (
+        <ActivityIndicator size="large" />
+      ) : isProcessing === Status.Error ? (
+        <View>
+          <Text style={[commonStyles.textBM, { color: theme.text }]}>
+            Error processing the file
+          </Text>
+        </View>
+      ) : (
+        <View>
+          <Text style={[commonStyles.textBM, { color: theme.text }]}>
+            Succeed!
+          </Text>
+        </View>
+      )}
     </EmptyScreenMessage>
   ) : (
     <ScreenWrapper style={commonStyles.scrollContainer}>
@@ -140,18 +155,30 @@ export default function UploadScreen() {
           </View>
         )}
 
-        {textFile && extension === "apkg" && isLoading && (
+        {textFile &&
+          extension === "apkg" &&
+          isLoading === Status.Processing && (
+            <View style={style(theme).group}>
+              <View>
+                <Text style={[commonStyles.textBM, { color: theme.text }]}>
+                  Processing Anki file
+                </Text>
+                <ActivityIndicator size="large" />
+              </View>
+            </View>
+          )}
+
+        {textFile && extension === "apkg" && isLoading === Status.Error && (
           <View style={style(theme).group}>
             <View>
               <Text style={[commonStyles.textBM, { color: theme.text }]}>
-                Processing Anki file
+                Error processing the file
               </Text>
-              <ActivityIndicator size="large" />
             </View>
           </View>
         )}
 
-        {proceed() && colExample && colMap && !isLoading && (
+        {proceed() && colExample && colMap && isLoading === Status.Succeed && (
           <View style={style(theme).group}>
             {textData && (
               <Text style={[commonStyles.normalText, { color: theme.text }]}>

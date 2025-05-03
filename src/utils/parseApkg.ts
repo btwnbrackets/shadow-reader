@@ -1,50 +1,24 @@
 import { ColMapType, ParsedCSVType } from "@/db/models";
 import * as FileSystem from "expo-file-system";
 import { openDatabaseAsync } from "expo-sqlite";
-import { unzipSync } from "fflate";
+import { unzip } from 'react-native-zip-archive';
 
 const UNZIP_LOCATION = `${FileSystem.documentDirectory}apkgUnzip/`;
 
-async function loadApkgAsBinary(apkgPath: string): Promise<Uint8Array> {
-  const base64 = await FileSystem.readAsStringAsync(apkgPath, {
-    encoding: FileSystem.EncodingType.Base64,
-  });
-  return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-}
-
-function uint8ArrayToBase64(uint8: Uint8Array): string {
-  let binary = "";
-  const len = uint8.length;
-  for (let i = 0; i < len; i++) {
-    binary += String.fromCharCode(uint8[i]);
-  }
-  return btoa(binary);
-}
 
 async function loadApkgAndExtract(apkgPath: string) {
-  const binary = await loadApkgAsBinary(apkgPath);
+  console.log("unzip with react-native-zip-archive")
+  const files = await unzip(apkgPath, UNZIP_LOCATION);
 
-  const files = unzipSync(binary);
+  console.log("unzip filename", files);
+  console.log("unzip output location", UNZIP_LOCATION);
 
-  const filenames = Object.keys(files);
-  let dbPath = `${UNZIP_LOCATION}collection.anki2`;
-  console.log(`${filenames.length} files to write.`);
+  let dbPath = `${UNZIP_LOCATION}collection.anki21`;
+  if (await FileSystem.getInfoAsync(dbPath).then((res) => !res.exists)) {
+    dbPath = `${UNZIP_LOCATION}collection.anki2`;
+  }
 
-  const saveTasks = Object.entries(files).map(async ([name, data]) => {
-    const destPath = UNZIP_LOCATION + name;
-    if (name === "collection.anki21") {
-      dbPath += "1";
-    }
-    const base64 = uint8ArrayToBase64(data);
-    await FileSystem.writeAsStringAsync(destPath, base64, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-  });
-
-  await Promise.all(saveTasks);
-
-  console.log(`${filenames.length} files`);
-  return { filenames, dbPath };
+  return dbPath
 }
 
 async function loadMediaFile() {
@@ -93,14 +67,8 @@ async function openDatabase(dbPath: string) {
 }
 
 export async function parseApkg(uri: string) {
-  const info = await FileSystem.getInfoAsync(UNZIP_LOCATION);
-  if (info.exists) {
-    await FileSystem.deleteAsync(UNZIP_LOCATION);
-    console.log("deleted unzip location", UNZIP_LOCATION);
-  }
-  await FileSystem.makeDirectoryAsync(UNZIP_LOCATION, { intermediates: true });
-  console.log("create unzip location", UNZIP_LOCATION);
-  const { filenames, dbPath } = await loadApkgAndExtract(uri);
+  await loadApkgAndExtract(uri);
+  const dbPath  = await loadApkgAndExtract(uri);
   const mediaMap = await loadMediaFile();
   const { notes, modelFields } = await openDatabase(dbPath);
 

@@ -6,7 +6,7 @@ import { Alert } from "react-native";
 import { addSentence, addStory } from "@/db/queries";
 import { useRouter } from "expo-router";
 import { ALLOWED_EXT } from "@/style/constants";
-import { ColExampleType, ColMapType, ParsedCSVType } from "@/db/models";
+import { ColExampleType, ColMapType, ParsedCSVType, Status } from "@/db/models";
 
 export default function uploadHook() {
   const [textFile, setTextFile] =
@@ -14,8 +14,8 @@ export default function uploadHook() {
   const router = useRouter();
   const [extension, setExtension] = useState<string | undefined>();
   const [textData, setTextData] = useState<ParsedCSVType[] | undefined>();
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isProcessing, setIsProcessing] = useState<Status>(Status.Idle);
+  const [isLoading, setIsLoading] = useState<Status>(Status.Idle);
   const [colMap, setColMap] = useState<ColMapType>();
   const [colExample, setColExample] = useState<ColExampleType>();
   const [filename, setFilename] = useState<string>("");
@@ -60,17 +60,17 @@ export default function uploadHook() {
         let uri = result?.assets?.[0]?.uri;
 
         if (uri) {
-          setIsLoading(true);
+          setIsLoading(Status.Processing);
           const { parsedData, columns } = await callback(uri);
           setTextData(parsedData);
           selectColumns(columns, parsedData);
         }
       }
+      setIsLoading(Status.Succeed);
     } catch (error) {
+      setIsLoading(Status.Error);
       console.error(error);
       Alert.alert("Error", "Failed to pick a text file.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -91,7 +91,7 @@ export default function uploadHook() {
       );
       return;
     }
-    setIsProcessing(true);
+    setIsProcessing(Status.Processing);
     let audioFiles = 0;
     try {
       const storyCreationDate = new Date().toISOString();
@@ -137,14 +137,13 @@ export default function uploadHook() {
         "Success",
         `Processed ${textData.length} sentences & ${audioFiles} audio files. And deleted ${movedAudioFiles.size} unused media files.`
       );
-
+      setIsProcessing(Status.Succeed);
       router.replace("/");
     } catch (error) {
+      setIsProcessing(Status.Error);
       console.error(error);
       Alert.alert("Error", "Failed to process files.");
-      router.push("/upload");
-    } finally {
-      setIsProcessing(false);
+      router.replace("/");
     }
   };
 

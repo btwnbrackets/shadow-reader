@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.2] - 2025-04-30
+## [1.0.2] - 2025-05-03
 ### Added
 - fix apkg upload bug
 - delete unzipped folder after 

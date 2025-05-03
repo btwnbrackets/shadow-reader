@@ -106,6 +106,7 @@ export default function uploadHook() {
           : await csvCallback(audioDir);
       console.log("total media files", movedAudioFiles.size);
       const dbStoryId = await addStory(filename, storyCreationDate);
+      console.log("dbStoryId", dbStoryId);
       const dbTask = textData.map(async (row) => {
         let sentence = getParsedCell(row, colExample.columns, colMap.sentence);
         let audio = getParsedCell(row, colExample.columns, colMap.audio);

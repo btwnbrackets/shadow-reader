@@ -1,29 +1,29 @@
 import { ColMapType, ParsedCSVType } from "@/db/models";
 import * as FileSystem from "expo-file-system";
 import { openDatabaseAsync } from "expo-sqlite";
-import { unzip } from 'react-native-zip-archive';
+import { unzip } from "react-native-zip-archive";
 
 const UNZIP_LOCATION = `${FileSystem.documentDirectory}apkgUnzip/`;
 
-
 async function loadApkgAndExtract(apkgPath: string) {
-  console.log("unzip with react-native-zip-archive")
-  const files = await unzip(apkgPath, UNZIP_LOCATION);
+  const EXTRACT_FOLDER = UNZIP_LOCATION + Date.now() + "/";
+  const files = await unzip(apkgPath, EXTRACT_FOLDER);
 
-  console.log("unzip filename", files);
-  console.log("unzip output location", UNZIP_LOCATION);
+  console.log("apkgPath", apkgPath);
+  console.log("unzip files", files);
+  console.log("unzip filename", EXTRACT_FOLDER);
 
-  let dbPath = `${UNZIP_LOCATION}collection.anki21`;
+  let dbPath = `${EXTRACT_FOLDER}collection.anki21`;
   if (await FileSystem.getInfoAsync(dbPath).then((res) => !res.exists)) {
-    dbPath = `${UNZIP_LOCATION}collection.anki2`;
+    dbPath = `${EXTRACT_FOLDER}collection.anki2`;
   }
 
-  return dbPath
+  return { dbPath, EXTRACT_FOLDER };
 }
 
-async function loadMediaFile() {
+async function loadMediaFile(targetFolder: string) {
   let mediaMap: Record<string, string> = {};
-  const mediaFilePath = `${UNZIP_LOCATION}media`;
+  const mediaFilePath = `${targetFolder}media`;
   if (await FileSystem.getInfoAsync(mediaFilePath).then((res) => res.exists)) {
     const mediaContent = await FileSystem.readAsStringAsync(mediaFilePath);
     mediaMap = JSON.parse(mediaContent);
@@ -33,7 +33,7 @@ async function loadMediaFile() {
 }
 
 async function openDatabase(dbPath: string) {
-  console.log("openDatabase");
+  console.log("openDatabase", dbPath);
 
   const db = await openDatabaseAsync(dbPath);
   console.log("db", db);
@@ -67,9 +67,12 @@ async function openDatabase(dbPath: string) {
 }
 
 export async function parseApkg(uri: string) {
-  await loadApkgAndExtract(uri);
-  const dbPath  = await loadApkgAndExtract(uri);
-  const mediaMap = await loadMediaFile();
+  const info = await FileSystem.getInfoAsync(UNZIP_LOCATION);
+  if (!info.exists) {
+    await FileSystem.makeDirectoryAsync(UNZIP_LOCATION);
+  }
+  const { dbPath, EXTRACT_FOLDER } = await loadApkgAndExtract(uri);
+  const mediaMap = await loadMediaFile(EXTRACT_FOLDER);
   const { notes, modelFields } = await openDatabase(dbPath);
 
   let mid;
@@ -84,7 +87,9 @@ export async function parseApkg(uri: string) {
 
     return data;
   });
+  console.log("parsedData", parsedData.length);
   return {
+    EXTRACT_FOLDER,
     parsedData,
     columns: mid ? modelFields[mid] : [],
     mediaMap,
@@ -92,6 +97,7 @@ export async function parseApkg(uri: string) {
 }
 
 export async function parseAndSaveAudio(
+  targetFolder: string,
   dir: string | undefined,
   mediaMap: Record<string, string>
 ) {
@@ -101,20 +107,18 @@ export async function parseAndSaveAudio(
       const newFilePath = `${dir}/${value}`;
       movedAudioFiles.set(value, newFilePath);
       return await FileSystem.copyAsync({
-        from: UNZIP_LOCATION + key,
+        from: targetFolder + key,
         to: newFilePath,
       });
     });
     await Promise.all(audioTask);
   }
 
-  console.log("movedAudioFiles", movedAudioFiles);
-
   // delete zip folder
-  const info = await FileSystem.getInfoAsync(UNZIP_LOCATION);
+  const info = await FileSystem.getInfoAsync(targetFolder);
   if (info.exists) {
-    await FileSystem.deleteAsync(UNZIP_LOCATION);
-    console.log("deleted unzip location", UNZIP_LOCATION);
+    await FileSystem.deleteAsync(targetFolder);
+    console.log("deleted unzip location", targetFolder);
   }
 
   return movedAudioFiles;

@@ -6,18 +6,22 @@ type Props = {};
 
 export default function apkgHook() {
   const [audioMap, setAudioMap] = useState<Record<string, string>>({});
+  const [targetFolder, setTargetFolder] = useState<string>("");
 
   const loadApkgFileCallback = async (uri: string) => {
-    const { parsedData, columns, mediaMap } = await parseApkg(uri);
+    const { EXTRACT_FOLDER, parsedData, columns, mediaMap } = await parseApkg(
+      uri
+    );
     setAudioMap(mediaMap);
+    setTargetFolder(EXTRACT_FOLDER);
     return { parsedData, columns };
   };
 
   const handleApkgAudioCallback = useCallback(
     async (dir: string | undefined) => {
-      return parseAndSaveAudio(dir, audioMap);
+      return parseAndSaveAudio(targetFolder, dir, audioMap);
     },
-    [audioMap]
+    [audioMap, targetFolder]
   );
 
   return {

@@ -23,7 +23,7 @@ export default function IndexScreen() {
     sortedColumn,
   } = queryIndex();
 
-  const { isModalVisible, onSortClose } = header({
+  const { isSortModalVisible, onSortClose } = header({
     confirmDeleteAll,
     search,
     isSort: true,
@@ -40,7 +40,7 @@ export default function IndexScreen() {
         onDelete={confirmDeleteStory}
       />
       <SortModal
-        isVisible={isModalVisible}
+        isVisible={isSortModalVisible}
         onClose={onSortClose}
         columns={columns}
         sortBy={sortBy}

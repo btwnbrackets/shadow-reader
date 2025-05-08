@@ -1,11 +1,6 @@
 import { getDateLabel } from "@/src/utils/dates";
 import { db } from "./database";
-import {
-  GroupedByHistory,
-  Sentence,
-  Story,
-  StoryDetails,
-} from "./models";
+import { GroupedByHistory, Sentence, Story, StoryDetails, Tag } from "./models";
 
 export const addStory = async (
   name: string,
@@ -31,6 +26,23 @@ export const addSentence = async (
     audioUri,
     translation,
     storyId
+  );
+  return result.lastInsertRowId;
+};
+
+export const addSentenceTag = async (
+  sentenceId: number,
+  tag: string
+): Promise<number> => {
+  const tagId = await db.runAsync(
+    "INSERT OR IGNORE INTO Tag (name) VALUES (?);",
+    tag
+  );
+
+  const result = await db.runAsync(
+    "INSERT OR IGNORE INTO SentenceTag (sentenceId, tagId) VALUES (?, ?);",
+    sentenceId,
+    tagId.lastInsertRowId
   );
   return result.lastInsertRowId;
 };
@@ -105,17 +117,46 @@ export const getAllHistory = async (
 };
 
 export const getAllFavoriteSentences = async (
-  searchWord: string
-): Promise<Sentence[]> => {
-  const allRows = (await db.getAllAsync(`
-    SELECT *
-    FROM Sentence
-    WHERE isFavorite = 1
-    ${searchWord != "" ? " AND content LIKE '%" + searchWord + "%'" : ""}
+  searchWord: string,
+  onTags: Set<number> | undefined
+): Promise<{ sentences: Sentence[]; tags: Tag[] }> => {
+  let sentencesSql = `
+  SELECT DISTINCT s.*
+  FROM Sentence s
+  LEFT JOIN SentenceTag st ON st.sentenceId = s.id
+  LEFT JOIN Tag t ON t.id = st.tagId
+  WHERE s.isFavorite = 1
+`;
+  const params: any[] = [];
 
-  `)) as Sentence[];
+  // Add tag filter
+  if (onTags) {
+    if (onTags.size > 0) {
+      const placeholders = [...onTags].map(() => "?").join(", ");
+      sentencesSql += ` AND st.tagId IN (${placeholders})`;
+      params.push(...onTags);
+    } else {
+      sentencesSql += ` AND st.tagId IS NULL`;
+    }
+  }
 
-  return allRows;
+  // Add searchWord filter
+  if (searchWord !== "") {
+    sentencesSql += ` AND s.content LIKE ?`;
+    params.push(`%${searchWord}%`);
+  }
+  const sentences = (await db.getAllAsync(sentencesSql, params)) as Sentence[];
+
+  const tags = (await db.getAllAsync(
+    `
+    SELECT DISTINCT  t.* 
+    FROM Tag t
+    INNER JOIN SentenceTag st ON st.tagId = t.id
+    INNER JOIN Sentence s ON st.sentenceId = s.id 
+    WHERE s.isFavorite = 1
+  `
+  )) as Tag[];
+  return { sentences, tags };
 };
 
 export const getSortedStories = async (
@@ -131,24 +172,54 @@ export const getSortedStories = async (
 
 export const getStoryDetails = async (
   storyId: number,
-  searchWord: string
+  searchWord: string,
+  onTags: Set<number> | undefined
 ): Promise<StoryDetails> => {
   const story = await db.getFirstAsync("SELECT * FROM Story WHERE id = ?;", [
     storyId,
   ]);
-  const sentences = (await db.getAllAsync(
+
+  let sentencesSql = `
+  SELECT DISTINCT s.*
+  FROM Sentence s
+  LEFT JOIN SentenceTag st ON st.sentenceId = s.id
+  LEFT JOIN Tag t ON t.id = st.tagId
+  WHERE s.storyId = ?
+`;
+  const params: any[] = [storyId];
+
+  // Add tag filter
+  if (onTags) {
+    if (onTags.size > 0) {
+      const placeholders = [...onTags].map(() => "?").join(", ");
+      sentencesSql += ` AND st.tagId IN (${placeholders})`;
+      params.push(...onTags);
+    } else {
+      sentencesSql += ` AND st.tagId IS NULL`;
+    }
+  }
+
+  // Add searchWord filter
+  if (searchWord !== "") {
+    sentencesSql += ` AND s.content LIKE ?`;
+    params.push(`%${searchWord}%`);
+  }
+
+  const sentences = (await db.getAllAsync(sentencesSql, params)) as Sentence[];
+  const tags = (await db.getAllAsync(
     `
-    SELECT * 
-    FROM Sentence
-    WHERE storyId = ?
-    ${searchWord != "" ? "AND content LIKE '%" + searchWord + "%'" : ""}
+    SELECT DISTINCT  t.* 
+    FROM Tag t
+    INNER JOIN Sentence s ON s.storyId = ?
+    INNER JOIN SentenceTag st ON st.sentenceId = s.id
   `,
     [storyId]
-  )) as Sentence[];
+  )) as Tag[];
 
   const storyDetails = {
     story,
-    sentences: sentences
+    sentences,
+    tags,
   } as StoryDetails;
   return storyDetails;
 };
@@ -169,7 +240,6 @@ export const deleteAllStory = async (): Promise<number> => {
   const result = await db.runAsync("DELETE FROM Story");
   return result.lastInsertRowId;
 };
-
 
 export const deleteIsFavoriteSentence = async (id: number): Promise<number> => {
   const result = await db.runAsync(

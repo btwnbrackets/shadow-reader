@@ -29,10 +29,14 @@ export default function AudioControlBar({
   const { theme } = useTheme();
 
   return (
-    <View style={[styles.bottomBarContainer, {
-      backgroundColor: theme.background,
-      borderTopColor: theme.surface
-    }]}>
+    <View
+      style={[
+        styles.bottomBarContainer,
+        {
+          borderTopColor: theme.surface,
+        },
+      ]}
+    >
       <TapIcon
         onTap={playBackward}
         disabled={playBackwardDisabled}

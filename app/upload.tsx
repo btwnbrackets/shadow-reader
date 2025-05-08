@@ -39,6 +39,8 @@ export default function UploadScreen() {
     setTextData,
     filename,
     setFilename,
+    tagSplit,
+    setTagSplit,
   } = uploadHook();
 
   const {
@@ -247,6 +249,39 @@ export default function UploadScreen() {
                           colMap.audio
                         )
                       : undefined,
+                },
+                {
+                  label: "Tags Column",
+                  placeholder: colMap.tags,
+                  setInput: (tags: number) => {
+                    setColMap({ ...colMap, tags });
+                  },
+                  dropdown: colExample.columns,
+                  message:
+                    colMap.audio >= 0 &&
+                    colMap.audio < colExample.columns.length
+                      ? "Example: " +
+                        getParsedCell(
+                          colExample.examples,
+                          colExample.columns,
+                          colMap.tags
+                        )
+                      : undefined,
+                },
+                {
+                  label: "Split tags by",
+                  placeholder: tagSplit,
+                  setInput: (tagSplit: string) => {
+                    console.log(tagSplit);
+                    setTagSplit(tagSplit);
+                  },
+                  dropdown: [
+                    { label: "Comma (,)", value: "," },
+                    { label: "Tab (\\t)", value: "\t" },
+                    { label: "Semicolon (;)", value: ";" },
+                    { label: "Pipe (|)", value: "|" },
+                    { label: "Space ( )", value: " " },
+                  ],
                 },
               ]}
             />

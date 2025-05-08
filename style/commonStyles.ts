@@ -76,6 +76,28 @@ export const commonStyles = StyleSheet.create({
     borderWidth: 1,
     alignSelf: "stretch",
   },
+  tags: {
+    borderRadius: radius.large,
+    alignSelf: "center",
+    margin: spacing.xsmall,
+    paddingHorizontal: spacing.small,
+    paddingVertical: spacing.xsmall,
+    fontSize: fontSize.small,
+  },
+  // modal
+  modalItemContainer: {
+    flexDirection: "row",
+  },
+  modalIconContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalTextStyle: {
+    justifyContent: "center",
+    alignItems: "center",
+    flex: 11,
+  },
   // text
   borderRadiusCard: {
     borderRadius: radius.small,

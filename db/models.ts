@@ -14,6 +14,7 @@ export type ColMapType = {
   sentence: number;
   audio: number;
   meaning: number;
+  tags: number;
 };
 
 export interface Story {
@@ -35,6 +36,7 @@ export interface Sentence {
 export interface StoryDetails {
   story: Story;
   sentences: Sentence[];
+  tags: Tag[];
 }
 
 export interface GroupedByHistory {

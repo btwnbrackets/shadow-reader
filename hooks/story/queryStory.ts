@@ -18,15 +18,32 @@ export default function queryStory() {
 
   const [searchWord, setSearchWord] = useState<string>("");
 
+  const [filterOn, setFilterOn] = useState<Set<number> | undefined>(undefined);
+
   const search = (word: string) => {
     setSearchWord(word);
+  };
+
+  const filterBy = (tagId: number) => {
+    setFilterOn((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(tagId)) {
+        newSet.delete(tagId);
+      } else {
+        newSet.add(tagId);
+      }
+      return newSet;
+    });
   };
 
   const loadData = async () => {
     console.log("load stories");
     try {
-      const data = await getStoryDetails(storyId, searchWord);
+      const data = await getStoryDetails(storyId, searchWord, filterOn);
       setStoryDetails(data);
+      if(filterOn === undefined) {
+        setFilterOn(new Set(data.tags.map(x => x.id)));
+      }
       const title = data.story.name;
       navigation.setOptions({ title: title });
     } catch (error) {
@@ -53,7 +70,7 @@ export default function queryStory() {
     });
 
     return unsubscribe;
-  }, [storyId, navigation, searchWord]);
+  }, [storyId, navigation, searchWord, filterOn]);
 
   // losing focus
   useFocusEffect(
@@ -96,5 +113,7 @@ export default function queryStory() {
     storyDetails,
     loadData,
     search,
+    filterBy,
+    filterOn,
   };
 }

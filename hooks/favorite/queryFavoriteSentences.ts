@@ -1,21 +1,36 @@
 import { useEffect, useState } from "react";
 import { Alert } from "react-native";
 import { useNavigation } from "expo-router";
-import { Sentence } from "@/db/models";
+import { Sentence, Tag } from "@/db/models";
 import { deleteAllFavoriteSentences, deleteIsFavoriteSentence, getAllFavoriteSentences } from "@/db/queries";
 
 export default function queryFavoriteSentences() {
   const navigation = useNavigation();
 
-  const [sentences, setSentences] = useState<Sentence[] | undefined>(undefined);
+  const [setenceTags, setSentenceTags] = useState<{sentences: Sentence[], tags: Tag[]} | undefined>(undefined);
   const [searchWord, setSearchWord] = useState<string>("");
+  const [filterOn, setFilterOn] = useState<Set<number> | undefined>(undefined);
 
+  const filterBy = (tagId: number) => {
+    setFilterOn((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(tagId)) {
+        newSet.delete(tagId);
+      } else {
+        newSet.add(tagId);
+      }
+      return newSet;
+    });
+  };
 
   const loadData = async () => {
     console.log("load favorite sentences");
     try {
-      const data = await getAllFavoriteSentences(searchWord);
-      setSentences(data);
+      const data = await getAllFavoriteSentences(searchWord, filterOn);
+      setSentenceTags(data);
+      if(filterOn === undefined) {
+        setFilterOn(new Set(data.tags.map(x => x.id)));
+      }
     } catch (error) {
       console.error("Error loading favorite sentences data:", error);
       Alert.alert("Error", "Failed to load favorite sentences data.");
@@ -101,10 +116,12 @@ export default function queryFavoriteSentences() {
     });
 
     return unsubscribe;
-  }, [navigation, searchWord]);
+  }, [navigation, searchWord, filterOn]);
 
   return {
-    sentences,
+    setenceTags,
+    filterBy,
+    filterOn,
     confirmDeleteLookup,
     confirmDeleteAll,
     search,

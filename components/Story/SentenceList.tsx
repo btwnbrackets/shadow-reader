@@ -30,10 +30,7 @@ export default function SentenceList({
   return (
     <View
       style={[
-        commonStyles.scrollContainer,
-        {
-          backgroundColor: theme.background,
-        },
+        commonStyles.scrollContainer
       ]}
     >
       <FlatList

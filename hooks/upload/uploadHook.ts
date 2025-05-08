@@ -3,7 +3,7 @@ import * as DocumentPicker from "expo-document-picker";
 import { getParsedCell } from "@/src/utils/parseCSV";
 import * as FileSystem from "expo-file-system";
 import { Alert } from "react-native";
-import { addSentence, addStory } from "@/db/queries";
+import { addSentence, addSentenceTag, addStory } from "@/db/queries";
 import { useRouter } from "expo-router";
 import { ALLOWED_EXT } from "@/style/constants";
 import { ColExampleType, ColMapType, ParsedCSVType, Status } from "@/db/models";
@@ -19,6 +19,7 @@ export default function uploadHook() {
   const [colMap, setColMap] = useState<ColMapType>();
   const [colExample, setColExample] = useState<ColExampleType>();
   const [filename, setFilename] = useState<string>("");
+  const [tagSplit, setTagSplit] = useState<string>("");
 
   const getFileExtension = (filename: string | undefined) => {
     return filename?.split(".")?.pop()?.toLowerCase();
@@ -115,13 +116,20 @@ export default function uploadHook() {
         }
 
         let meaning = getParsedCell(row, colExample.columns, colMap.meaning);
+        let tags = getParsedCell(row, colExample.columns, colMap.tags);
+        let tagList = tags?.split(tagSplit);
         if (sentence || audio || meaning) {
-          await addSentence(
+          const sentenceId = await addSentence(
             sentence || "",
             (audio && movedAudioFiles.get(audio)) || "",
             meaning || "",
             dbStoryId
           );
+          tagList?.forEach(async (tag) => {
+            if (tag.trim() != "") {
+              await addSentenceTag(sentenceId, tag.trim());
+            }
+          });
           if (audio) {
             audioFiles += 1;
             movedAudioFiles.delete(audio);
@@ -157,6 +165,7 @@ export default function uploadHook() {
       sentence: data.length > 0 ? 0 : -1,
       meaning: cols.length > 1 ? 1 : -1,
       audio: cols.length > 2 ? 2 : -1,
+      tags: cols.length > 3 ? 3 : -1,
     });
   };
 
@@ -177,5 +186,7 @@ export default function uploadHook() {
     selectColumns,
     filename,
     setFilename,
+    tagSplit,
+    setTagSplit,
   };
 }

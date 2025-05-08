@@ -48,7 +48,6 @@ export const setupDatabase = async (): Promise<SQLiteDatabase> => {
       'INSERT OR IGNORE INTO Version (key, value) VALUES ("schema_version", ".9");'
     );
 
-
     await db.execAsync(
       `CREATE TABLE IF NOT EXISTS Story (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -82,7 +81,17 @@ export const setupDatabase = async (): Promise<SQLiteDatabase> => {
         storyId INTEGER NOT NULL,
         tagId INTEGER NOT NULL,
         PRIMARY KEY(storyId, tagId),
-        FOREIGN KEY(storyId) REFERENCES Story(id),
+        FOREIGN KEY(storyId) REFERENCES Story(id) ON DELETE CASCADE,
+        FOREIGN KEY(tagId) REFERENCES Tag(id)
+      );`
+    );
+
+    await db.execAsync(
+      `CREATE TABLE IF NOT EXISTS SentenceTag (
+        sentenceId INTEGER NOT NULL,
+        tagId INTEGER NOT NULL,
+        PRIMARY KEY(sentenceId, tagId),
+        FOREIGN KEY(sentenceId) REFERENCES Sentence(id) ON DELETE CASCADE,
         FOREIGN KEY(tagId) REFERENCES Tag(id)
       );`
     );

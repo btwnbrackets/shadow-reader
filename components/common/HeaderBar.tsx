@@ -8,7 +8,9 @@ type Props = {
   toggleTranslation?: () => void;
   showTranslation?: boolean;
   toggleSort?: () => void;
-  isModalVisible?: boolean;
+  toggleFilter?: () => void;
+  isFilterModalVisible?: boolean;
+  isSortModalVisible?: boolean;
   toggleSearch?: () => void;
   showSearch?: boolean;
   confirmDeleteAll?: () => void;
@@ -24,7 +26,7 @@ export default function HeaderBar({
   toggleTranslation,
   showTranslation,
   confirmDeleteAll,
-  isModalVisible,
+  isSortModalVisible,
   toggleSort,
   showSearch,
   setSearchWord,
@@ -34,6 +36,8 @@ export default function HeaderBar({
   add,
   toggleTheme,
   theme,
+  toggleFilter,
+  isFilterModalVisible,
 }: Props) {
   const showSearchBar = toggleSearch && setSearchWord && showSearch;
   return (
@@ -74,7 +78,7 @@ export default function HeaderBar({
             <TapIcon
               style={styles.iconStyles}
               onTap={toggleTranslation}
-              iconName={ showTranslation ? "translate":"translate-off"}
+              iconName={showTranslation ? "translate" : "translate-off"}
               color={showTranslation ? theme.accent : undefined}
             />
           )}
@@ -83,7 +87,15 @@ export default function HeaderBar({
               style={styles.iconStyles}
               iconName="sort"
               onTap={toggleSort}
-              color={isModalVisible ? theme.accent : undefined}
+              color={isSortModalVisible ? theme.accent : undefined}
+            />
+          )}
+          {toggleFilter && (
+            <TapIcon
+              style={styles.iconStyles}
+              iconName="filter"
+              onTap={toggleFilter}
+              color={isFilterModalVisible ? theme.accent : undefined}
             />
           )}
           {add && (

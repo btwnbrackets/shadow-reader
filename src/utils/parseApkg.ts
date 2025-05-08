@@ -1,4 +1,3 @@
-import { ColMapType, ParsedCSVType } from "@/db/models";
 import * as FileSystem from "expo-file-system";
 import { openDatabaseAsync } from "expo-sqlite";
 import { unzip } from "react-native-zip-archive";
@@ -85,13 +84,16 @@ export async function parseApkg(uri: string) {
       data[name] = fields[idx] || "";
     });
 
+    data["Tags"] = note.tags;
     return data;
   });
+
+  const columns = mid ? [...modelFields[mid], "Tags"] : []
   console.log("parsedData", parsedData.length);
   return {
     EXTRACT_FOLDER,
     parsedData,
-    columns: mid ? modelFields[mid] : [],
+    columns,
     mediaMap,
   };
 }
